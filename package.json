@@ -1,0 +1,15 @@
+{
+	"name": "c-blog",
+	"description": "a blog system powered by node.js & mongodb",
+	"version": "0.0.1",
+	"author": "amoa400 <amoa400@163.com>",
+	"keywords": [
+		"c-blog",
+		"blog"
+	],
+	"repository": "https://github.com/amoa400/c-blog",
+	"homepage": "http://www.amoa400.com",
+	"dependencies": {
+		"express": "3.0.4"
+	}
+}
