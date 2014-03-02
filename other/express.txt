@@ -1,0 +1,1052 @@
+version 3.0.3
+mime [object Object]
+basicAuth function basicAuth(callback, realm) {
+  var username, password;
+
+  // user / pass strings
+  if ('string' == typeof callback) {
+    username = callback;
+    password = realm;
+    if ('string' != typeof password) throw new Error('password argument required');
+    realm = arguments[2];
+    callback = function(user, pass){
+      return user == username && pass == password;
+    }
+  }
+
+  realm = realm || 'Authorization Required';
+
+  return function(req, res, next) {
+    var authorization = req.headers.authorization;
+
+    if (req.user) return next();
+    if (!authorization) return unauthorized(res, realm);
+
+    var parts = authorization.split(' ');
+
+    if (parts.length !== 2) return next(utils.error(400));
+
+    var scheme = parts[0]
+      , credentials = new Buffer(parts[1], 'base64').toString()
+      , index = credentials.indexOf(':');
+
+    if ('Basic' != scheme || index < 0) return next(utils.error(400));
+    
+    var user = credentials.slice(0, index)
+      , pass = credentials.slice(index + 1);
+
+    // async
+    if (callback.length >= 3) {
+      var pause = utils.pause(req);
+      callback(user, pass, function(err, user){
+        if (err || !user)  return unauthorized(res, realm);
+        req.user = req.remoteUser = user;
+        next();
+        pause.resume();
+      });
+    // sync
+    } else {
+      if (callback(user, pass)) {
+        req.user = req.remoteUser = user;
+        next();
+      } else {
+        unauthorized(res, realm);
+      }
+    }
+  }
+}
+bodyParser function bodyParser(options){
+  var _urlencoded = urlencoded(options)
+    , _multipart = multipart(options)
+    , _json = json(options);
+
+  return function bodyParser(req, res, next) {
+    _json(req, res, function(err){
+      if (err) return next(err);
+      _urlencoded(req, res, function(err){
+        if (err) return next(err);
+        _multipart(req, res, next);
+      });
+    });
+  }
+}
+compress function compress(options) {
+  options = options || {};
+  var names = Object.keys(exports.methods)
+    , filter = options.filter || exports.filter;
+
+  return function(req, res, next){
+    var accept = req.headers['accept-encoding']
+      , write = res.write
+      , end = res.end
+      , stream
+      , method;
+
+    // vary
+    res.setHeader('Vary', 'Accept-Encoding');
+
+    // proxy
+
+    res.write = function(chunk, encoding){
+      if (!this.headerSent) this._implicitHeader();
+      return stream
+        ? stream.write(new Buffer(chunk, encoding))
+        : write.call(res, chunk, encoding);
+    };
+
+    res.end = function(chunk, encoding){
+      if (chunk) this.write(chunk, encoding);
+      return stream
+        ? stream.end()
+        : end.call(res);
+    };
+
+    res.on('header', function(){
+      var encoding = res.getHeader('Content-Encoding') || 'identity';
+
+      // already encoded
+      if ('identity' != encoding) return; 
+
+      // default request filter
+      if (!filter(req, res)) return;
+
+      // SHOULD use identity
+      if (!accept) return;
+
+      // head
+      if ('HEAD' == req.method) return;
+
+      // default to gzip
+      if ('*' == accept.trim()) method = 'gzip';
+
+      // compression method
+      if (!method) {
+        for (var i = 0, len = names.length; i < len; ++i) {
+          if (~accept.indexOf(names[i])) {
+            method = names[i];
+            break;
+          }
+        }
+      }
+
+      // compression method
+      if (!method) return;
+
+      // compression stream
+      stream = exports.methods[method](options);
+
+      // header fields
+      res.setHeader('Content-Encoding', method);
+      res.removeHeader('Content-Length');
+
+      // compression
+
+      stream.on('data', function(chunk){
+        write.call(res, chunk);
+      });
+
+      stream.on('end', function(){
+        end.call(res);
+      });
+
+      stream.on('drain', function() {
+        res.emit('drain');
+      });
+    });
+
+    next();
+  };
+}
+cookieParser function cookieParser(secret){
+  return function cookieParser(req, res, next) {
+    if (req.cookies) return next();
+    var cookies = req.headers.cookie;
+
+    req.secret = secret;
+    req.cookies = {};
+    req.signedCookies = {};
+
+    if (cookies) {
+      try {
+        req.cookies = cookie.parse(cookies);
+        if (secret) {
+          req.signedCookies = utils.parseSignedCookies(req.cookies, secret);
+          req.signedCookies = utils.parseJSONCookies(req.signedCookies);
+        }
+        req.cookies = utils.parseJSONCookies(req.cookies);
+      } catch (err) {
+        err.status = 400;
+        return next(err);
+      }
+    }
+    next();
+  };
+}
+cookieSession function cookieSession(options){
+  // TODO: utilize Session/Cookie to unify API
+  options = options || {};
+  var key = options.key || 'connect.sess'
+    , trustProxy = options.proxy;
+
+  return function cookieSession(req, res, next) {
+
+    // req.secret is for backwards compatibility
+    var secret = options.secret || req.secret;
+    if (!secret) throw new Error('`secret` option required for cookie sessions');
+
+    // default session
+    req.session = {};
+    var cookie = req.session.cookie = new Cookie(options.cookie);
+
+    // pathname mismatch
+    if (0 != req.originalUrl.indexOf(cookie.path)) return next();
+
+    // cookieParser secret
+    if (!options.secret && req.secret) {
+      req.session = req.signedCookies[key] || {};
+    } else {
+      // TODO: refactor
+      var rawCookie = req.cookies[key];
+      if (rawCookie) {
+        var unsigned = utils.parseSignedCookie(rawCookie, secret);
+        if (unsigned) {
+          var originalHash = crc16(unsigned);
+          req.session = utils.parseJSONCookie(unsigned) || {};
+        }
+      }
+    }
+
+    res.on('header', function(){
+      // removed
+      if (!req.session) {
+        debug('clear session');
+        cookie.expires = new Date(0);
+        res.setHeader('Set-Cookie', cookie.serialize(key, ''));
+        return;
+      }
+
+      delete req.session.cookie;
+
+      // check security
+      var proto = (req.headers['x-forwarded-proto'] || '').toLowerCase()
+        , tls = req.connection.encrypted || (trustProxy && 'https' == proto)
+        , secured = cookie.secure && tls;
+
+      // only send secure cookies via https
+      if (cookie.secure && !secured) return debug('not secured');
+
+      // serialize
+      debug('serializing %j', req.session);
+      var val = 'j:' + JSON.stringify(req.session);
+
+      // compare hashes, no need to set-cookie if unchanged
+      if (originalHash == crc16(val)) return debug('unmodified session');
+
+      // set-cookie
+      val = 's:' + signature.sign(val, secret);
+      val = cookie.serialize(key, val);
+      debug('set-cookie %j', cookie);
+      res.setHeader('Set-Cookie', val);
+    });
+
+    next();
+  };
+}
+csrf function csrf(options) {
+  options = options || {};
+  var value = options.value || defaultValue;
+
+  return function(req, res, next){
+    // generate CSRF token
+    var token = req.session._csrf || (req.session._csrf = utils.uid(24));
+
+    // ignore these methods
+    if ('GET' == req.method || 'HEAD' == req.method || 'OPTIONS' == req.method) return next();
+
+    // determine value
+    var val = value(req);
+
+    // check
+    if (val != token) return next(utils.error(403));
+    
+    next();
+  }
+}
+directory function directory(root, options){
+  options = options || {};
+
+  // root required
+  if (!root) throw new Error('directory() root path required');
+  var hidden = options.hidden
+    , icons = options.icons
+    , filter = options.filter
+    , root = normalize(root);
+
+  return function directory(req, res, next) {
+    if ('GET' != req.method && 'HEAD' != req.method) return next();
+
+    var accept = req.headers.accept || 'text/plain'
+      , url = parse(req.url)
+      , dir = decodeURIComponent(url.pathname)
+      , path = normalize(join(root, dir))
+      , originalUrl = parse(req.originalUrl)
+      , originalDir = decodeURIComponent(originalUrl.pathname)
+      , showUp = path != root && path != root + '/';
+
+    // null byte(s), bad request
+    if (~path.indexOf('\0')) return next(utils.error(400));
+
+    // malicious path, forbidden
+    if (0 != path.indexOf(root)) return next(utils.error(403));
+
+    // check if we have a directory
+    fs.stat(path, function(err, stat){
+      if (err) return 'ENOENT' == err.code
+        ? next()
+        : next(err);
+
+      if (!stat.isDirectory()) return next();
+
+      // fetch files
+      fs.readdir(path, function(err, files){
+        if (err) return next(err);
+        if (!hidden) files = removeHidden(files);
+        if (filter) files = files.filter(filter);
+        files.sort();
+
+        // content-negotiation
+        for (var key in exports) {
+          if (~accept.indexOf(key) || ~accept.indexOf('*/*')) {
+            exports[key](req, res, files, next, originalDir, showUp, icons);
+            return;
+          }
+        }
+
+        // not acceptable
+        next(utils.error(406));
+      });
+    });
+  };
+}
+errorHandler function errorHandler(){
+  return function errorHandler(err, req, res, next){
+    if (err.status) res.statusCode = err.status;
+    if (res.statusCode < 400) res.statusCode = 500;
+    if ('test' != env) console.error(err.stack);
+    var accept = req.headers.accept || '';
+    // html
+    if (~accept.indexOf('html')) {
+      fs.readFile(__dirname + '/../public/style.css', 'utf8', function(e, style){
+        fs.readFile(__dirname + '/../public/error.html', 'utf8', function(e, html){
+          var stack = (err.stack || '')
+            .split('\n').slice(1)
+            .map(function(v){ return '<li>' + v + '</li>'; }).join('');
+            html = html
+              .replace('{style}', style)
+              .replace('{stack}', stack)
+              .replace('{title}', exports.title)
+              .replace('{statusCode}', res.statusCode)
+              .replace(/\{error\}/g, utils.escape(err.toString()));
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            res.end(html);
+        });
+      });
+    // json
+    } else if (~accept.indexOf('json')) {
+      var error = { message: err.message, stack: err.stack };
+      for (var prop in err) error[prop] = err[prop];
+      var json = JSON.stringify({ error: error });
+      res.setHeader('Content-Type', 'application/json');
+      res.end(json);
+    // plain text
+    } else {
+      res.writeHead(res.statusCode, { 'Content-Type': 'text/plain' });
+      res.end(err.stack);
+    }
+  };
+}
+favicon function favicon(path, options){
+  var options = options || {}
+    , path = path || __dirname + '/../public/favicon.ico'
+    , maxAge = options.maxAge || 86400000
+    , icon; // favicon cache
+
+  return function favicon(req, res, next){
+    if ('/favicon.ico' == req.url) {
+      if (icon) {
+        res.writeHead(200, icon.headers);
+        res.end(icon.body);
+      } else {
+        fs.readFile(path, function(err, buf){
+          if (err) return next(err);
+          icon = {
+            headers: {
+                'Content-Type': 'image/x-icon'
+              , 'Content-Length': buf.length
+              , 'ETag': '"' + utils.md5(buf) + '"'
+              , 'Cache-Control': 'public, max-age=' + (maxAge / 1000)
+            },
+            body: buf
+          };
+          res.writeHead(200, icon.headers);
+          res.end(icon.body);
+        });
+      }
+    } else {
+      next();
+    }
+  };
+}
+json function (options){
+  var options = options || {}
+    , strict = options.strict !== false;
+
+  var limit = options.limit
+    ? _limit(options.limit)
+    : noop;
+
+  return function json(req, res, next) {
+    if (req._body) return next();
+    req.body = req.body || {};
+
+    if (!utils.hasBody(req)) return next();
+
+    // check Content-Type
+    if ('application/json' != utils.mime(req)) return next();
+
+    // flag as parsed
+    req._body = true;
+
+    // parse
+    limit(req, res, function(err){
+      if (err) return next(err);
+      var buf = '';
+      req.setEncoding('utf8');
+      req.on('data', function(chunk){ buf += chunk });
+      req.on('end', function(){
+        var first = buf.trim()[0];
+        if (strict && '{' != first && '[' != first) return next(utils.error(400, 'invalid json'));
+        try {
+          req.body = JSON.parse(buf, options.reviver);
+          next();
+        } catch (err){
+          err.body = buf;
+          err.status = 400;
+          next(err);
+        }
+      });
+    });
+  }
+}
+limit function limit(bytes){
+  if ('string' == typeof bytes) bytes = utils.parseBytes(bytes);
+  if ('number' != typeof bytes) throw new Error('limit() bytes required');
+  return function limit(req, res, next){
+    var received = 0
+      , len = req.headers['content-length']
+        ? parseInt(req.headers['content-length'], 10)
+        : null;
+
+    // self-awareness
+    if (req._limit) return next();
+    req._limit = true;
+
+    // limit by content-length
+    if (len && len > bytes) return next(utils.error(413));
+
+    // limit
+    req.on('data', function(chunk){
+      received += chunk.length;
+      if (received > bytes) req.destroy();
+    });
+
+    next();
+  };
+}
+logger function logger(options) {
+  if ('object' == typeof options) {
+    options = options || {};
+  } else if (options) {
+    options = { format: options };
+  } else {
+    options = {};
+  }
+
+  // output on request instead of response
+  var immediate = options.immediate;
+
+  // format name
+  var fmt = exports[options.format] || options.format || exports.default;
+
+  // compile format
+  if ('function' != typeof fmt) fmt = compile(fmt);
+
+  // options
+  var stream = options.stream || process.stdout
+    , buffer = options.buffer;
+
+  // buffering support
+  if (buffer) {
+    var realStream = stream
+      , interval = 'number' == typeof buffer
+        ? buffer
+        : defaultBufferDuration;
+
+    // flush interval
+    setInterval(function(){
+      if (buf.length) {
+        realStream.write(buf.join(''));
+        buf.length = 0;
+      }
+    }, interval); 
+
+    // swap the stream
+    stream = {
+      write: function(str){
+        buf.push(str);
+      }
+    };
+  }
+
+  return function logger(req, res, next) {
+    req._startTime = new Date;
+
+    // immediate
+    if (immediate) {
+      var line = fmt(exports, req, res);
+      if (null == line) return;
+      stream.write(line + '\n');
+    // proxy end to output logging
+    } else {
+      var end = res.end;
+      res.end = function(chunk, encoding){
+        res.end = end;
+        res.end(chunk, encoding);
+        var line = fmt(exports, req, res);
+        if (null == line) return;
+        stream.write(line + '\n');
+      };
+    }
+
+
+    next();
+  };
+}
+methodOverride function methodOverride(key){
+  key = key || "_method";
+  return function methodOverride(req, res, next) {
+    req.originalMethod = req.originalMethod || req.method;
+
+    // req.body
+    if (req.body && key in req.body) {
+      req.method = req.body[key].toUpperCase();
+      delete req.body[key];
+    // check X-HTTP-Method-Override
+    } else if (req.headers['x-http-method-override']) {
+      req.method = req.headers['x-http-method-override'].toUpperCase();
+    }
+    
+    next();
+  };
+}
+multipart function (options){
+  options = options || {};
+
+  var limit = options.limit
+    ? _limit(options.limit)
+    : noop;
+
+  return function multipart(req, res, next) {
+    if (req._body) return next();
+    req.body = req.body || {};
+    req.files = req.files || {};
+
+    if (!utils.hasBody(req)) return next();
+
+    // ignore GET
+    if ('GET' == req.method || 'HEAD' == req.method) return next();
+
+    // check Content-Type
+    if ('multipart/form-data' != utils.mime(req)) return next();
+
+    // flag as parsed
+    req._body = true;
+
+    // parse
+    limit(req, res, function(err){
+      if (err) return next(err);
+
+      var form = new formidable.IncomingForm
+        , data = {}
+        , files = {}
+        , done;
+
+      Object.keys(options).forEach(function(key){
+        form[key] = options[key];
+      });
+
+      function ondata(name, val, data){
+        if (Array.isArray(data[name])) {
+          data[name].push(val);
+        } else if (data[name]) {
+          data[name] = [data[name], val];
+        } else {
+          data[name] = val;
+        }
+      }
+
+      form.on('field', function(name, val){
+        ondata(name, val, data);
+      });
+
+      form.on('file', function(name, val){
+        ondata(name, val, files);
+      });
+
+      form.on('error', function(err){
+        if (!options.defer) {
+          err.status = 400;
+          next(err);
+        }
+        done = true;
+      });
+
+      form.on('end', function(){
+        if (done) return;
+        try {
+          req.body = qs.parse(data);
+          req.files = qs.parse(files);
+          if (!options.defer) next();
+        } catch (err) {
+          form.emit('error', err);
+        }
+      });
+
+      form.parse(req);
+
+      if (options.defer) {
+        req.form = form;
+        next();
+      }
+    });
+  }
+}
+query function query(options){
+  return function query(req, res, next){
+    if (!req.query) {
+      req.query = ~req.url.indexOf('?')
+        ? qs.parse(parse(req).query, options)
+        : {};
+    }
+
+    next();
+  };
+}
+responseTime function responseTime(){
+  return function(req, res, next){
+    var start = new Date;
+
+    if (res._responseTime) return next();
+    res._responseTime = true;
+
+    res.on('header', function(){
+      var duration = new Date - start;
+      res.setHeader('X-Response-Time', duration + 'ms');
+    });
+
+    next();
+  };
+}
+session function session(options){
+  var options = options || {}
+    , key = options.key || 'connect.sid'
+    , store = options.store || new MemoryStore
+    , cookie = options.cookie || {}
+    , trustProxy = options.proxy
+    , storeReady = true;
+
+  // notify user that this store is not
+  // meant for a production environment
+  if ('production' == env && store instanceof MemoryStore) {
+    console.warn(warning);
+  }
+
+  // generates the new session
+  store.generate = function(req){
+    req.sessionID = utils.uid(24);
+    req.session = new Session(req);
+    req.session.cookie = new Cookie(cookie);
+  };
+
+  store.on('disconnect', function(){ storeReady = false; });
+  store.on('connect', function(){ storeReady = true; });
+
+  return function session(req, res, next) {
+    // self-awareness
+    if (req.session) return next();
+
+    // Handle connection as if there is no session if
+    // the store has temporarily disconnected etc
+    if (!storeReady) return debug('store is disconnected'), next();
+
+    // pathname mismatch
+    if (0 != req.originalUrl.indexOf(cookie.path || '/')) return next();
+
+    // backwards compatibility for signed cookies
+    // req.secret is passed from the cookie parser middleware
+    var secret = options.secret || req.secret;
+
+    // ensure secret is available or bail
+    if (!secret) throw new Error('`secret` option required for sessions');
+
+    // parse url
+    var originalHash
+      , originalId;
+
+    // expose store
+    req.sessionStore = store;
+
+    // grab the session cookie value and check the signature
+    var rawCookie = req.cookies[key];
+
+    // get signedCookies for backwards compat with signed cookies
+    var unsignedCookie = req.signedCookies[key];
+
+    if (!unsignedCookie && rawCookie) {
+      unsignedCookie = utils.parseSignedCookie(rawCookie, secret);
+    }
+
+    // set-cookie
+    res.on('header', function(){
+      if (!req.session) return;
+      var cookie = req.session.cookie
+        , proto = (req.headers['x-forwarded-proto'] || '').toLowerCase()
+        , tls = req.connection.encrypted || (trustProxy && 'https' == proto)
+        , secured = cookie.secure && tls
+        , isNew = unsignedCookie != req.sessionID;
+
+      // only send secure cookies via https
+      if (cookie.secure && !secured) return debug('not secured');
+
+      // browser-session length cookie
+      if (null == cookie.expires) {
+        if (!isNew) return debug('already set browser-session cookie');
+      // compare hashes and ids
+      } else if (originalHash == hash(req.session) && originalId == req.session.id) {
+        return debug('unmodified session');
+      }
+
+      var val = 's:' + signature.sign(req.sessionID, secret);
+      val = cookie.serialize(key, val);
+      debug('set-cookie %s', val);
+      res.setHeader('Set-Cookie', val);
+    });
+
+    // proxy end() to commit the session
+    var end = res.end;
+    res.end = function(data, encoding){
+      res.end = end;
+      if (!req.session) return res.end(data, encoding);
+      debug('saving');
+      req.session.resetMaxAge();
+      req.session.save(function(){
+        debug('saved');
+        res.end(data, encoding);
+      });
+    };
+
+    // generate the session
+    function generate() {
+      store.generate(req);
+    }
+
+    // get the sessionID from the cookie
+    req.sessionID = unsignedCookie;
+
+    // generate a session if the browser doesn't send a sessionID
+    if (!req.sessionID) {
+      debug('no SID sent, generating session');
+      generate();
+      next();
+      return;
+    }
+
+    // generate the session object
+    var pause = utils.pause(req);
+    debug('fetching %s', req.sessionID);
+    store.get(req.sessionID, function(err, sess){
+      // proxy to resume() events
+      var _next = next;
+      next = function(err){
+        _next(err);
+        pause.resume();
+      };
+
+      // error handling
+      if (err) {
+        debug('error');
+        if ('ENOENT' == err.code) {
+          generate();
+          next();
+        } else {
+          next(err);
+        }
+      // no session
+      } else if (!sess) {
+        debug('no session found');
+        generate();
+        next();
+      // populate req.session
+      } else {
+        debug('session found');
+        store.createSession(req, sess);
+        originalId = req.sessionID;
+        originalHash = hash(sess);
+        next();
+      }
+    });
+  };
+}
+static function static(root, options){
+  options = options || {};
+
+  // root required
+  if (!root) throw new Error('static() root path required');
+
+  // default redirect
+  var redirect = false !== options.redirect;
+
+  return function static(req, res, next) {
+    if ('GET' != req.method && 'HEAD' != req.method) return next();
+    var path = parse(req).pathname;
+    var pause = utils.pause(req);
+
+    function resume() {
+      next();
+      pause.resume();
+    }
+
+    function directory() {
+      if (!redirect) return resume();
+      var pathname = url.parse(req.originalUrl).pathname;
+      res.statusCode = 301;
+      res.setHeader('Location', pathname + '/');
+      res.end('Redirecting to ' + utils.escape(pathname) + '/');
+    }
+
+    function error(err) {
+      if (404 == err.status) return resume();
+      next(err);
+    }
+
+    send(req, path)
+      .maxage(options.maxAge || 0)
+      .root(root)
+      .hidden(options.hidden)
+      .on('error', error)
+      .on('directory', directory)
+      .pipe(res);
+  };
+}
+staticCache function staticCache(options){
+  var options = options || {}
+    , cache = new Cache(options.maxObjects || 128)
+    , maxlen = options.maxLength || 1024 * 256;
+
+  console.warn('connect.staticCache() is deprecated and will be removed in 3.0');
+  console.warn('use varnish or similar reverse proxy caches.');
+
+  return function staticCache(req, res, next){
+    var key = cacheKey(req)
+      , ranges = req.headers.range
+      , hasCookies = req.headers.cookie
+      , hit = cache.get(key);
+
+    // cache static
+    // TODO: change from staticCache() -> cache()
+    // and make this work for any request
+    req.on('static', function(stream){
+      var headers = res._headers
+        , cc = utils.parseCacheControl(headers['cache-control'] || '')
+        , contentLength = headers['content-length']
+        , hit;
+
+      // dont cache set-cookie responses
+      if (headers['set-cookie']) return hasCookies = true;
+
+      // dont cache when cookies are present
+      if (hasCookies) return;
+
+      // ignore larger files
+      if (!contentLength || contentLength > maxlen) return;
+
+      // don't cache partial files
+      if (headers['content-range']) return;
+
+      // dont cache items we shouldn't be
+      // TODO: real support for must-revalidate / no-cache
+      if ( cc['no-cache']
+        || cc['no-store']
+        || cc['private']
+        || cc['must-revalidate']) return;
+
+      // if already in cache then validate
+      if (hit = cache.get(key)){
+        if (headers.etag == hit[0].etag) {
+          hit[0].date = new Date;
+          return;
+        } else {
+          cache.remove(key);
+        }
+      }
+
+      // validation notifiactions don't contain a steam
+      if (null == stream) return;
+
+      // add the cache object
+      var arr = [];
+
+      // store the chunks
+      stream.on('data', function(chunk){
+        arr.push(chunk);
+      });
+
+      // flag it as complete
+      stream.on('end', function(){
+        var cacheEntry = cache.add(key);
+        delete headers['x-cache']; // Clean up (TODO: others)
+        cacheEntry.push(200);
+        cacheEntry.push(headers);
+        cacheEntry.push.apply(cacheEntry, arr);
+      });
+    });
+
+    if (req.method == 'GET' || req.method == 'HEAD') {
+      if (ranges) {
+        next();
+      } else if (!hasCookies && hit && !mustRevalidate(req, hit)) {
+        res.setHeader('X-Cache', 'HIT');
+        respondFromCache(req, res, hit);
+      } else {
+        res.setHeader('X-Cache', 'MISS');
+        next();
+      }
+    } else {
+      next();
+    }
+  }
+}
+timeout function timeout(ms) {
+  ms = ms || 5000;
+
+  return function(req, res, next) {
+    var id = setTimeout(function(){
+      req.emit('timeout', ms);
+    }, ms);
+
+    req.on('timeout', function(){
+      if (req.headerSent) return debug('response started, cannot timeout');
+      var err = new Error('Request timeout');
+      err.timeout = ms;
+      err.status = 408;
+      next(err);
+    });
+
+    req.clearTimeout = function(){
+      clearTimeout(id);
+    };
+
+    res.on('header', function(){
+      clearTimeout(id);
+    });
+
+    next();
+  };
+}
+urlencoded function (options){
+  options = options || {};
+
+  var limit = options.limit
+    ? _limit(options.limit)
+    : noop;
+
+  return function urlencoded(req, res, next) {
+    if (req._body) return next();
+    req.body = req.body || {};
+
+    if (!utils.hasBody(req)) return next();
+
+    // check Content-Type
+    if ('application/x-www-form-urlencoded' != utils.mime(req)) return next();
+
+    // flag as parsed
+    req._body = true;
+
+    // parse
+    limit(req, res, function(err){
+      if (err) return next(err);
+      var buf = '';
+      req.setEncoding('utf8');
+      req.on('data', function(chunk){ buf += chunk });
+      req.on('end', function(){
+        try {
+          req.body = buf.length
+            ? qs.parse(buf, options)
+            : {};
+          next();
+        } catch (err){
+          err.body = buf;
+          next(err);
+        }
+      });
+    });
+  }
+}
+vhost function vhost(hostname, server){
+  if (!hostname) throw new Error('vhost hostname required');
+  if (!server) throw new Error('vhost server required');
+  var regexp = new RegExp('^' + hostname.replace(/[*]/g, '(.*?)') + '$', 'i');
+  if (server.onvhost) server.onvhost(hostname);
+  return function vhost(req, res, next){
+    if (!req.headers.host) return next();
+    var host = req.headers.host.split(':')[0];
+    if (!regexp.test(host)) return next();
+    if ('function' == typeof server) return server(req, res, next);
+    server.emit('request', req, res);
+  };
+}
+createServer function (){
+  console.warn('Warning: express.createServer() is deprecated, express');
+  console.warn('applications no longer inherit from http.Server,');
+  console.warn('please use:');
+  console.warn('');
+  console.warn('  var express = require("express");');
+  console.warn('  var app = express();');
+  console.warn('');
+  return createApplication();
+}
+application [object Object]
+request [object Object]
+response [object Object]
+Route function Route(method, path, callbacks, options) {
+  options = options || {};
+  this.path = path;
+  this.method = method;
+  this.callbacks = callbacks;
+  this.regexp = utils.pathRegexp(path
+    , this.keys = []
+    , options.sensitive
+    , options.strict);
+}
+Router function Router(options) {
+  options = options || {};
+  var self = this;
+  this.map = {};
+  this.params = {};
+  this._params = [];
+  this.caseSensitive = options.caseSensitive;
+  this.strict = options.strict;
+  this.middleware = function router(req, res, next){
+    self._dispatch(req, res, next);
+  };
+}
