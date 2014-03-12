@@ -1,0 +1,53 @@
+<% include header.html %>
+
+<div class="save">
+<form action="/createDo/" method="post">
+
+	<div class="main left">
+		<div class="item title">Create a new article</div>
+		<div class="item">
+			<input name="title" type="text" class="form-control" placeholder="title">
+		</div>
+		<div class="item">
+			<textarea name="content" type="text" class="form-control" placeholder="content"></textarea>
+		</div>
+		<div class="item preview"></div>
+	</div>
+
+	<div class="right">
+		<div class="main item">
+			<div class="content">
+				<input type="submit" class="form-control btn btn-primary" value="save">
+			</div>
+		</div>
+		<div class="main item">
+			<div class="content">
+				<input name="alias" class="form-control" placeholder="alias">
+			</div>
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+</form>
+</div>
+
+<script type="text/javascript">
+	$().ready(function() {
+		var saveWidth = parseInt($('.save').css('width'));
+		var leftWidth = parseInt($('.save .left').css('width'));
+		$('.save .right').css('width', saveWidth - leftWidth - 30);
+		$('.save textarea').keyup();
+	});
+
+	$('.save textarea').keyup(function() {
+		if (this.value.length == 0)
+			$('.save .preview').html('preview area');
+		else
+			$('.save .preview').html(markdown.toHTML(this.value));
+	});
+</script>
+
+<script type="text/javascript" src="/js/markdown.min.js"></script>
+
+<% include footer.html %>

@@ -1,4 +1,12 @@
 {
+	"name": "aa-blog",
+	"slogan": "hello world",
 	"cpus": 2,
-	"port": 3100
+	"port": 3100,
+	"sessionSecret": "aablog-ghsdaf!$FDGSVCB%$#3523DSAFdsa14f",
+	"db": {
+		"host": "localhost",
+		"port": 27017,
+		"name": "aa-blog"
+	}
 }

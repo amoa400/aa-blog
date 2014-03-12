@@ -1,0 +1,79 @@
+<% include header.html %>
+
+<div class="body show list">
+
+	<div class="main left">
+		<% if (filter.keyword != null) { %>
+			<div class="item">
+				keyword: <strong><%= filter.keyword %></strong>
+			</div>
+		<% } %>
+
+		<% for (var i = 0; i < articles.length; i++) { %>
+			<div class="item">
+				<div class="title"><a href="/a/<%= articles[i].alias %>/"><%= articles[i].title %></a></div>
+				<div class="other">
+					<span>by <%= username %></span>
+					<span>Publish Time: <%= articles[i].create_time_f %></span>
+					<span>Views: <%= articles[i].view_count %></span>
+				</div>
+				<div class="content"><%- articles[i].abstract %></div>
+				<div class="more"><a href="/a/<%= articles[i].alias %>/">Read More...</a></div>
+			</div>
+		<% } %>
+		
+		<ul class="pagination">
+			<%
+				var prefix = '';
+				if (filter.keyword != null) {
+					prefix += '/keyword/' + filter.keyword;
+				}
+			%>
+
+		  <% if (cntPage > 4) { %>
+		  	<li><a href="<%= prefix %>/page/1/">1</a></li>
+		  <% } %>
+
+		  <% if (cntPage > 5) { %>
+		  	<li><a href="javascript:void(0)">...</a></li>
+		  <% } %>
+
+		  <% 
+		  	for (var i = cntPage - 3; i < cntPage; i++) { 
+		  		if (i > 0) {
+		  %>
+		  	<li><a href="<%= prefix %>/page/<%= i %>/"><%= i %></a></li>
+		  <% 
+		  		}
+		  	} 
+		  %>
+
+		  <li class="active"><a href="javascript:void(0)"><%= cntPage %></a></li>
+
+		  <% 
+		  	for (var i = cntPage + 1; i <= cntPage + 3; i++) { 
+		  		if (i <= totPage) {
+		  %>
+		  	<li><a href="<%= prefix %>/page/<%= i %>/"><%= i %></a></li>
+		  <% 
+		  		}
+		  	}
+		  %>
+
+		  <% if (cntPage + 4 < totPage) { %>
+		  	<li><a href="javascript:void(0)">...</a></li>
+		  <% } %>
+
+		  <% if (cntPage + 3 < totPage) { %>
+		  	<li><a href="<%= prefix %>/page/<%= totPage %>/"><%= totPage %></a></li>
+		  <% } %>
+
+		  <li class="disabled"><a>total: <%= num %> articles</a></li>
+		</ul>
+	</div>
+
+	<% include body_right.html %>
+
+</div>
+
+<% include footer.html %>

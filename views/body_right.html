@@ -1,0 +1,35 @@
+<div class="main right">
+	<div class="item">
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-search"></span></span>
+			<input name="keyword" type="text" class="form-control" placeholder="Search" value="">
+		</div>
+	</div>
+	<% if (session.signed) { %>
+		<div class="item">
+			<div class="title">Admin</div>
+			<div class="content">
+				<div class="it"><a href="/admin/">Manage</a></div>
+				<div class="it"><a href="/signout/">Signout</a></div>
+				<div class="it"><a href="http://www.amoa400.com/a/aa-blog-hlep/" target="_blank">Help</a></div>
+			</div>
+		</div>
+	<% } %>
+</div>
+
+<div class="clearfix"></div>
+
+<script type="text/javascript">
+	function resize() {
+		var bodyWidth = parseInt($('.body').css('width'));
+		var leftWidth = parseInt($('.body .left').css('width'));
+		$('.body .right').css('width', bodyWidth - leftWidth - 30);
+	}
+	$().ready(resize);
+	$(window).resize(resize);
+	$('input[name="keyword"]').keydown(function(e) {
+		if (e.keyCode == 13) {
+			location.href = '/keyword/' + encodeURIComponent($('input[name="keyword"]').val()) + '/page/1/';
+		}
+	});
+</script>

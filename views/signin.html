@@ -1,0 +1,22 @@
+<% include header.html %>
+
+<div class="main signin">
+	<div class="title">
+		Signin to blog
+	</div>
+	<div class="inputs">
+	<form action="/signinDo/" method="post">
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+			<input name="username" type="text" class="form-control" placeholder="username">
+		</div>
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
+			<input name="password" type="password" class="form-control" placeholder="password">
+		</div>
+		<div class="item"><input type="submit" value="submit" class="form-control btn btn-primary"></div>
+	</form>
+	</div>
+</div>
+
+<% include footer.html %>

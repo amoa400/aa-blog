@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+
+	<head>
+		<% if (locals.pageTitle == 'index-aa-blog') { %>
+			<title><%= blogTitle %> | <%= blogSlogan %></title>
+		<% } else { %>
+			<title><%= pageTitle %> | <%= blogTitle %></title>
+		<% } %>
+		<meta charset="utf-8">
+		<meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<meta name="HandheldFriendly" content="true">
+
+		<link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css">
+		<link type="text/css" rel="stylesheet" href="/css/bootstrap-theme.min.css">
+		<link type="text/css" rel="stylesheet" href="/css/global.css">
+
+		<script type="text/javascript" src="/js/jquery.min.js"></script>
+		<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+	</head>
+
+	<body>
+
+		<header class="main">
+			<div class="left">
+				<div class="title"><a href="/"><%= blogTitle %></a></div>
+				<div class="slogan"><%= blogSlogan %></div>
+			</div>
+			<div class="right">
+				<% if (!!locals.weibo) { %>
+					<div class="item"><a href="<%= weibo %>" target="_blank"><img src="/image/social/weibo.png"></a></div>
+				<% } %>
+				<% if (!!locals.renren) { %>
+					<div class="item"><a href="<%= renren %>" target="_blank"><img src="/image/social/renren.png"></a></div>
+				<% } %>
+				<% if (!!locals.twitter) { %>
+					<div class="item"><a href="<%= twitter %>" target="_blank"><img src="/image/social/twitter.png"></a></div>
+				<% } %>
+				<% if (!!locals.facebook) { %>
+					<div class="item"><a href="<%= facebook %>" target="_blank"><img src="/image/social/facebook.png"></a></div>
+				<% } %>
+				<% if (!!locals.mail) { %>
+					<div class="item"><a href="mailto:<%= mail %>"><img src="/image/social/mail.png"></a></div>
+				<% } %>
+				<div class="clearfix"></div>
+			</div>
+			<div class="clearfix"></div>
+		</header>
