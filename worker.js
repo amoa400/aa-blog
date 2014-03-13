@@ -52,7 +52,8 @@ else {
 // local
 app.locals({
   blogTitle: config.name,
-  blogSlogan: config.slogan
+  blogSlogan: config.slogan,
+  loader: require('loader')
 });
 
 // mongodb
@@ -62,7 +63,7 @@ mongoose.connect('mongodb://' + config.db.host + ':' + config.db.port + '/' + co
       console.log(err);
       process.exit();
     }
-    mongoose.model('config', new mongoose.Schema()).find(function(err, docs) {
+    mongoose.model('config', new mongoose.Schema({}, {strict: false})).find(function(err, docs) {
       if (err) {
         console.log(err);
         return;

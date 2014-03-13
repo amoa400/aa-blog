@@ -67,3 +67,32 @@ exports.createDo = function(req, res) {
   });
 }
 
+exports.install = function(req, res) {
+  res.render('install', {pageTitle: 'install'});
+}
+
+exports.installDo = function(req, res) {
+  var obj = {};
+  mongoose.model('config').find({key: 'installed'}, function(err, docs) {
+    if (err || docs.length != 0) {
+      res.redirect('/');
+      return;
+    }
+
+    obj.blogTitle = req.body.blogTitle;
+    obj.blogSlogan = req.body.blogSlogan;
+    obj.username = req.body.username;
+    obj.password = req.body.password;
+    obj.installed = 1;
+    if (!obj.blogTitle || !obj.blogSlogan || !obj.username || !obj.password) {
+      res.redirect('/install/');
+      return;
+    }
+
+    mongoose.model('config').create({key: 'blogTitle', value: obj.blogTitle});
+    mongoose.model('config').create({key: 'blogSlogan', value: obj.blogSlogan});
+    mongoose.model('config').create({key: 'admin', username: obj.username, password: obj.password});
+
+    res.redirect('/');
+  });
+}

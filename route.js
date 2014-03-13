@@ -17,5 +17,8 @@ var route = module.exports = function(app) {
   app.post('/createDo/', admin.createDo);
 
   app.get('/a/:alias/', article.show);
+
+  app.get('/install/', admin.install);
+  app.post('/install_do/', admin.installDo);
 }
 

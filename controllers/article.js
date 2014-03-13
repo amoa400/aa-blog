@@ -24,8 +24,7 @@ exports.list = function(req, res) {
     var page = 1;
     if (filter.page)
      page = parseInt(filter.page);
-    console.log(page);
-
+  
     var artFilter = {};
     if (filter.keyword != null) {
       var keyword = '';

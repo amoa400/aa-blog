@@ -1,0 +1,30 @@
+<% include header.html %>
+
+<div class="main signin">
+	<div class="title">
+		Welecome to aa-blog
+	</div>
+	<div class="inputs">
+	<form action="/install_do/" method="post">
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-pencil"></span></span>
+			<input name="blogTitle" type="text" class="form-control" placeholder="blog title">
+		</div>
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-tag"></span></span>
+			<input name="blogSlogan" type="text" class="form-control" placeholder="blog slogan">
+		</div>
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
+			<input name="username" type="text" class="form-control" placeholder="username">
+		</div>
+		<div class="item input-group">
+			<span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
+			<input name="password" type="password" class="form-control" placeholder="password">
+		</div>
+		<div class="item"><input type="submit" value="install" class="form-control btn btn-primary"></div>
+	</form>
+	</div>
+</div>
+
+<% include footer.html %>
