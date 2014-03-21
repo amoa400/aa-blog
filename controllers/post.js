@@ -40,7 +40,7 @@ exports.list = function(req, res) {
       });
     },
     function (cb) {
-      aamysql.table('aa_post').field(['id', 'alias', 'title', 'abstract', 'create_time', 'view_count']).where(whereStr).limit((page - 1) * pageNum, pageNum).select(function(err, row) {
+      aamysql.table('aa_post').field(['id', 'alias', 'title', 'abstract', 'create_time', 'view_count']).where(whereStr).limit((page - 1) * pageNum, pageNum).order(['id', 'desc']).select(function(err, row) {
         cb(err, row);
       });
     }
