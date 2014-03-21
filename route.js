@@ -2,8 +2,8 @@ var post = require('./controllers/post');
 var admin = require('./controllers/admin');
 var route = module.exports = function(app) {
 
-  app.get(/^\/(?:page\/(\d*)\/)?$/, post.list);
-  app.get(/^\/keyword\/(\S*)\/page\/(\d*)\/$/, post.list);
+  app.get(/^\/(?:page\/(\d*))?$/, post.list);
+  app.get(/^\/keyword\/(\S*)\/page\/(\d*)$/, post.list);
 
   app.get('/p/:alias', post.show);
 
