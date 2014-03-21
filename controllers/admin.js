@@ -1,26 +1,36 @@
-var mongoose = require('mongoose');
+var func = require('../function');
+var async = require('async');
+var aamysql = require('aa-mysql');
 var crypto = require('crypto');
-
-require('../models/article');
-var article = mongoose.model('Article');
 
 exports.signin = function(req, res) {
   res.render('signin', {pageTitle: 'signin'});
 }
 
 exports.signinDo = function(req, res) {
-  mongoose.model('config').find({key: 'admin'}, function(err, docs) {
-    if (err || docs.length != 1) {
-      res.redirect('/signin/');
+  async.series([
+    function(cb) {
+      aamysql.table('aa_config').where({key: 'adminUser'}).find(function(err, row) {
+        cb(err, row);
+      });
+    },
+    function(cb) {
+      aamysql.table('aa_config').where({key: 'adminPass'}).find(function(err, row) {
+        cb(err, row);
+      });
+    }
+  ], function(err, data) {
+    if (err) {
+      console.log(err);
+      res.redirect('/admin/signin');
       return;
     }
-    var doc = docs[0].toObject();
-    if (req.body.username === doc.username && crypto.createHash('sha1').update(req.body.password).digest('hex') === doc.password) {
+    if (req.body.username === data[0].value && crypto.createHash('sha1').update(req.body.password).digest('hex') === data[1].value) {
       req.session.signed = true;
       req.session.username = req.body.username;
       res.redirect('/');
     } else {
-      res.redirect('/signin/');
+      res.redirect('/admin/signin');
     }
   });
 }
@@ -46,24 +56,25 @@ exports.createDo = function(req, res) {
     res.redirect('/');
     return;
   }
-  var doc = {
+  var data = {
     alias: req.body.alias,
     title: req.body.title,
     content: req.body.content,
-    abstract: req.body.content.sub(0, req.body.content.indexOf('<!--more-->'))
+    create_time: func.getTime(),
+    view_count: 0
   };
-  var moreIndex = req.body.content.indexOf('<!--more-->');
-  if (moreIndex != -1)
-    doc.abstract = req.body.content.substr(0, moreIndex);
+  var moreW = req.body.content.indexOf('<!--more-->');
+  if (moreW != -1)
+    data.abstract = req.body.content.substr(0, moreW);
   else
-    doc.abstract = doc.content;
-  // check
-  article.create(doc, function(err, ret) {
+    data.abstract = data.content;
+  // TODO: 正确性检查
+  aamysql.table('aa_post').insert(data, function(err, ret) {
     if (err) {
-      res.redirect('/create/');
+      res.redirect('/admin/create');
       return;
     }
-    res.redirect('/a/' + req.body.alias + '/');
+    res.redirect('/p/' + req.body.alias);
   });
 }
 
@@ -91,7 +102,7 @@ exports.installDo = function(req, res) {
 
     mongoose.model('config').create({key: 'blogTitle', value: obj.blogTitle});
     mongoose.model('config').create({key: 'blogSlogan', value: obj.blogSlogan});
-    mongoose.model('config').create({key: 'admin', username: obj.username, password: obj.password});
+    mongoose.model('config').create({key: 'admin', username: obj.username, password: crypto.createHash('sha1').update(obj.password).digest('hex')});
 
     res.redirect('/');
   });

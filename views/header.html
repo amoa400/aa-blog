@@ -11,12 +11,15 @@
 		<meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<meta name="HandheldFriendly" content="true">
 
-		<link type="text/css" rel="stylesheet" href="/css/bootstrap.min.css">
-		<link type="text/css" rel="stylesheet" href="/css/bootstrap-theme.min.css">
-		<link type="text/css" rel="stylesheet" href="/css/global.css">
+		<%- Loader('/assets/aa-blog.js', '/assets/aa-blog.css')
+			.js('/js/jquery.min.js')
+			.js('/js/bootstrap.min.js')
+			.css('/css/bootstrap.min.css')
+			.css('/css/bootstrap-theme.min.css')
+			.css('/css/global.css')
+			.done(assetsMap)
+		%>
 
-		<script type="text/javascript" src="/js/jquery.min.js"></script>
-		<script type="text/javascript" src="/js/bootstrap.min.js"></script>
 	</head>
 
 	<body>

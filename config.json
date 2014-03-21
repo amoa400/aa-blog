@@ -6,7 +6,9 @@
 	"sessionSecret": "aablog-ghsdaf!$FDGSVCB%$#3523DSAFdsa14f",
 	"db": {
 		"host": "localhost",
-		"port": 27017,
+		"port": 3306,
+		"user": "root",
+		"pass": "123",
 		"name": "aa-blog"
 	}
 }

@@ -1,27 +1,27 @@
 var config = require('./config');
+var func = require('./function');
 var express = require('express');
 var ejs = require('ejs');
-var mongoose = require('mongoose');
+var aamysql = require('aa-mysql');
 var app = express();
 
-// environments
+// 环境变量
 app.set('port', process.env.PORT || config.port);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'html');
-// app.set('env', 'production');
 app.engine('html', require('ejs').renderFile);
 
-// middleware
+// production
+app.set('env', 'production');
+process.env.NODE_ENV = 'production';
+
+// 中间件
 app.use(express.logger('dev'));
 app.use(express.compress());
 app.use(express.cookieParser());
 app.use(express.session({
   cookie: {maxAge: 20 * 60 * 1000},
-  secret: config.sessionSecret,
-  store: new require('session-mongoose')(express)({
-    url: 'mongodb://' + config.db.host + '/' + config.db.name,
-    interval: 120000
-  })
+  secret: config.sessionSecret
 }));
 app.use(express.timeout(10000));
 app.use(express.bodyParser());
@@ -49,60 +49,44 @@ else {
   });
 }
 
-// local
+// 模板变量
 app.locals({
-  blogTitle: config.name,
-  blogSlogan: config.slogan,
-  loader: require('loader')
+  Loader: require('loader'),
+  assetsMap: require('./public/assets.json')
 });
 
-// mongodb
-mongoose.connect('mongodb://' + config.db.host + ':' + config.db.port + '/' + config.db.name,
-  function(err) {
+// 数据库连接
+aamysql.config({
+  host: config.db.host,
+  port: config.db.port,
+  user: config.db.user,
+  pass: config.db.pass
+});
+aamysql.connect(function(err) {
+  if (err) {
+    console.log(err);
+    process.exit(0);
+  }
+  aamysql.use(config.db.name);
+
+  // 获取配置信息
+  aamysql.table('aa_config').select(function(err, rows) {
     if (err) {
       console.log(err);
-      process.exit();
+      return;
     }
-    mongoose.model('config', new mongoose.Schema({}, {strict: false})).find(function(err, docs) {
-      if (err) {
-        console.log(err);
-        return;
+    for (var i = 0; i < rows.length; i++) {
+      if (func.inArray(rows[i].key, ['blogTitle', 'blogSlogan', 'renren', 'weibo', 'twitter', 'facebook', 'mail', 'beian'])) {
+        app.locals[rows[i].key] = rows[i].value;
       }
-      for (var i = 0; i < docs.length; i++) {
-        var doc = docs[i].toObject();
-        switch (doc.key) {
-          case 'blogTitle':
-            app.locals.blogTitle = doc.value;
-            break;
-          case 'blogSlogan':
-            app.locals.blogSlogan = doc.value;
-            break;
-          case 'renren':
-            app.locals.renren = doc.value;
-            break;
-          case 'weibo':
-            app.locals.weibo = doc.value;
-            break;
-          case 'twitter':
-            app.locals.twitter = doc.value;
-            break;
-          case 'facebook':
-            app.locals.facebook = doc.value;
-            break;
-          case 'mail':
-            app.locals.mail = doc.value;
-            break;
-        }
+    }
+  });
+});
 
-      }
-    });
-  }
-);
-
-// create server
+// 创建HTTP服务器
 app.listen(app.get('port'), function() {
   console.log('worker listening on port ' + app.get('port'));
 });
 
-// router
+// 路由器
 require('./route')(app);

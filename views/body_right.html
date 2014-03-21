@@ -9,9 +9,9 @@
 		<div class="item">
 			<div class="title">Admin</div>
 			<div class="content">
-				<div class="it"><a href="/admin/">Manage</a></div>
-				<div class="it"><a href="/signout/">Signout</a></div>
-				<div class="it"><a href="http://www.amoa400.com/a/aa-blog-hlep/" target="_blank">Help</a></div>
+				<div class="it"><a href="/admin">Manage</a></div>
+				<div class="it"><a href="/admin/signout">Signout</a></div>
+				<div class="it"><a href="http://www.amoa400.com/p/aa-blog-hlep" target="_blank">Help</a></div>
 			</div>
 		</div>
 	<% } %>
@@ -29,7 +29,7 @@
 	$(window).resize(resize);
 	$('input[name="keyword"]').keydown(function(e) {
 		if (e.keyCode == 13) {
-			location.href = '/keyword/' + encodeURIComponent($('input[name="keyword"]').val()) + '/page/1/';
+			location.href = '/keyword/' + encodeURIComponent($('input[name="keyword"]').val()) + '/page/1';
 		}
 	});
 </script>

@@ -3,13 +3,13 @@
 <div class="body show">
 
 	<div class="main left">
-		<div class="title"><%= article.title %></div>
+		<div class="title"><%= post.title %></div>
 		<div class="other">
 			<span>by <%= username %></span>
-			<span>Publish Time: <%= article.create_time_f %></span>
-			<span>Views: <%= article.view_count + 1 %></span>
+			<span>Publish Time: <%= post.create_time_f %></span>
+			<span>Views: <%= post.view_count + 1 %></span>
 		</div>
-		<div class="content"><%- article.content %></div>
+		<div class="content"><%- post.content %></div>
 	</div>
 
 	<% include body_right.html %>
