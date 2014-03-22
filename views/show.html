@@ -9,7 +9,7 @@
 			<span>Publish Time: <%= post.create_time_f %></span>
 			<span>Views: <%= post.view_count + 1 %></span>
 		</div>
-		<div class="content"><%- post.content %></div>
+		<div class="content markdown"><%- post.content %></div>
 	</div>
 
 	<% include body_right.html %>

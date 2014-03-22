@@ -1,0 +1,42 @@
+.markdown {}
+
+.markdown p, h1, h2, h3, h4, h5, h6, pre {
+	margin-top: 20px;
+}
+
+.markdown h1, h2, h3, h4, h5, h6 {
+	font-weight: bold;
+}
+
+.markdown h1 {
+	font-size: 32px;
+}
+
+.markdown h2 {
+	font-size: 26px;
+}
+
+.markdown h3 {
+	font-size: 20px;
+}
+
+.markdown h4 {
+	font-size: 14px;
+}
+
+.markdown h5 {
+	font-size: 14px;
+}
+
+.markdown h6 {
+	font-size: 14px;
+}
+
+.markdown a {
+	color: #1070CA;
+}
+
+.markdown a:hover {
+	color:#1d8bc3;
+	text-decoration: none;
+}
