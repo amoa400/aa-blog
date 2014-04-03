@@ -14,6 +14,8 @@ var route = module.exports = function(app) {
   app.get('/admin/create', admin.create);
   app.post('/admin/createDo', admin.createDo);
 
+  app.get('/admin/edit/:alias', admin.create);
+
   app.get('*', function(req, res) {
     res.redirect('/');
   });

@@ -2,14 +2,15 @@
 
 <div class="save">
 <form action="/admin/createDo" method="post">
+	<input name="id" value="<%= post.id %>" class="hidden">
 
 	<div class="main left">
 		<div class="item title">Create a new article</div>
 		<div class="item">
-			<input name="title" type="text" class="form-control" placeholder="title">
+			<input name="title" type="text" class="form-control" placeholder="title" value="<%= post.title %>">
 		</div>
 		<div class="item">
-			<textarea name="content" type="text" class="form-control" placeholder="content"></textarea>
+			<textarea name="content" type="text" class="form-control" placeholder="content"><%= post.content %></textarea>
 		</div>
 		<div class="item preview"></div>
 	</div>
@@ -22,7 +23,7 @@
 		</div>
 		<div class="main item">
 			<div class="content">
-				<input name="alias" class="form-control" placeholder="alias">
+				<input name="alias" class="form-control" placeholder="alias" value="<%= post.alias %>">
 			</div>
 		</div>
 	</div>

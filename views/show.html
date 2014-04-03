@@ -2,14 +2,50 @@
 
 <div class="body show">
 
-	<div class="main left">
-		<div class="title"><%= post.title %></div>
-		<div class="other">
-			<span>by <%= username %></span>
-			<span>Publish Time: <%= post.create_time_f %></span>
-			<span>Views: <%= post.view_count + 1 %></span>
+	<div class="left">
+		<div class="main post">
+			<div class="title"><%= post.title %></div>
+			<div class="other">
+				<span>by <%= username %></span>
+				<span>Publish Time: <%= post.create_time_f %></span>
+				<span>Views: <%= post.view_count + 1 %></span>
+				<span class="jiathis_style">
+					<a class="jiathis_button_tsina"></a>
+					<a class="jiathis_button_renren"></a>
+					<a class="jiathis_button_weixin"></a>
+					<a class="jiathis_button_qzone"></a>
+					<a class="jiathis_button_email"></a>
+					<a class="jiathis_button_copy"></a>
+					<a class="jiathis_button_fav"></a>
+					<a href="http://www.jiathis.com/share?uid=1911576" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank">More</a>
+				</span>
+				<% if (session.signed) { %>
+				<span>Admin: <a href="/admin/edit/<%= post.alias %>">edit</a></span>
+				<% } %>
+			</div>
+			<div class="content markdown"><%- post.content %></div>
 		</div>
-		<div class="content markdown"><%- post.content %></div>
+
+		<div class="main comment">
+
+		<!-- 多说评论框 start -->
+			<div class="ds-thread" data-thread-key="<%= post.id %>" data-title="<%= post.title %>" data-url="/p/<%= post.alias %>"></div>
+		<!-- 多说评论框 end -->
+		<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+		<script type="text/javascript">
+		var duoshuoQuery = {short_name:"amoa400"};
+			(function() {
+				var ds = document.createElement('script');
+				ds.type = 'text/javascript';ds.async = true;
+				ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+				ds.charset = 'UTF-8';
+				(document.getElementsByTagName('head')[0] 
+				 || document.getElementsByTagName('body')[0]).appendChild(ds);
+			})();
+			</script>
+		<!-- 多说公共JS代码 end -->
+		</div>
+
 	</div>
 
 	<% include body_right.html %>
@@ -17,3 +53,12 @@
 </div>
 
 <% include footer.html %>
+
+<!-- JiaThis Button BEGIN -->
+<script type="text/javascript">
+	var jiathis_config = {
+    summary: "<%= post.abstract.replace(/\n/g, '').replace(/<\S{1,5}>/gm, '') %>"
+	}
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=1911576" charset="utf-8"></script>
+<!-- JiaThis Button END -->

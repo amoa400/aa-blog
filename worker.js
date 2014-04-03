@@ -12,22 +12,22 @@ app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
 
 // production
-app.set('env', 'production');
-process.env.NODE_ENV = 'production';
+//app.set('env', 'production');
+//process.env.NODE_ENV = 'production';
 
 // 中间件
 app.use(express.logger('dev'));
 app.use(express.compress());
+app.use(express.timeout(10000));
+app.use(express.static(__dirname + '/public'));
+app.use(express.favicon(__dirname + '/public/favicon.ico'));
 app.use(express.cookieParser());
 app.use(express.session({
   cookie: {maxAge: 20 * 60 * 1000},
   secret: config.sessionSecret
 }));
-app.use(express.timeout(10000));
 app.use(express.bodyParser());
 app.use(express.methodOverride());
-app.use(express.static(__dirname + '/public'));
-app.use(express.favicon(__dirname + '/public/favicon.ico'));
 app.use(function(req, res, next) {
   res.locals.session = req.session;
   next();

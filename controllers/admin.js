@@ -48,7 +48,10 @@ exports.create = function(req, res) {
     res.redirect('/');
     return;
   }
-  res.render('save', {pageTitle: 'create'});
+  aamysql.table('aa_post').where({alias: req.params['alias']}).find(function(err, row) {
+    var post = row || {id: '', alias: '', title: '', content: ''};
+    res.render('save', {pageTitle: 'create', post: post});
+  });
 }
 
 exports.createDo = function(req, res) {
@@ -69,13 +72,26 @@ exports.createDo = function(req, res) {
   else
     data.abstract = data.content;
   // TODO: 正确性检查
-  aamysql.table('aa_post').insert(data, function(err, ret) {
-    if (err) {
-      res.redirect('/admin/create');
-      return;
-    }
-    res.redirect('/p/' + req.body.alias);
-  });
+
+  if (req.body.id) {
+    delete data.create_time;
+    delete data.view_count;
+    aamysql.table('aa_post').where({id: req.body.id}).update(data, function(err, ret) {
+      if (err) {
+        res.redirect('/admin/create');
+        return;
+      }
+      res.redirect('/p/' + req.body.alias);
+    });
+  } else {
+    aamysql.table('aa_post').insert(data, function(err, ret) {
+      if (err) {
+        res.redirect('/admin/create');
+        return;
+      }
+      res.redirect('/p/' + req.body.alias);
+    });
+  }
 }
 
 exports.install = function(req, res) {
