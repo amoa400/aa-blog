@@ -2,10 +2,10 @@
 <html>
 
 	<head>
-		<% if (locals.pageTitle == 'index-aa-blog') { %>
-			<title><%= blogTitle %> | <%= blogSlogan %></title>
+		<% if (pageTitle == 'index-aa-blog') { %>
+			<title><%= config.name %> | <%= config.slogan %></title>
 		<% } else { %>
-			<title><%= pageTitle %> | <%= blogTitle %></title>
+			<title><%= pageTitle %> | <%= config.name %></title>
 		<% } %>
 		<meta charset="utf-8">
 		<meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -27,24 +27,27 @@
 
 		<header class="main">
 			<div class="left">
-				<div class="title"><a href="/"><%= blogTitle %></a></div>
-				<div class="slogan"><%= blogSlogan %></div>
+				<div class="title"><a href="/"><%= config.name %></a></div>
+				<div class="slogan"><%= config.slogan %></div>
 			</div>
 			<div class="right">
-				<% if (!!locals.weibo) { %>
-					<div class="item"><a href="<%= weibo %>" target="_blank"><img src="/image/social/weibo.png"></a></div>
+				<% if (config.weibo) { %>
+					<div class="item"><a href="<%= config.weibo %>" target="_blank"><img src="/image/social/weibo.png"></a></div>
 				<% } %>
-				<% if (!!locals.renren) { %>
-					<div class="item"><a href="<%= renren %>" target="_blank"><img src="/image/social/renren.png"></a></div>
+				<% if (config.renren) { %>
+					<div class="item"><a href="<%= config.renren %>" target="_blank"><img src="/image/social/renren.png"></a></div>
 				<% } %>
-				<% if (!!locals.twitter) { %>
-					<div class="item"><a href="<%= twitter %>" target="_blank"><img src="/image/social/twitter.png"></a></div>
+				<% if (config.twitter) { %>
+					<div class="item"><a href="<%= config.twitter %>" target="_blank"><img src="/image/social/twitter.png"></a></div>
 				<% } %>
-				<% if (!!locals.facebook) { %>
-					<div class="item"><a href="<%= facebook %>" target="_blank"><img src="/image/social/facebook.png"></a></div>
+				<% if (config.facebook) { %>
+					<div class="item"><a href="<%= config.facebook %>" target="_blank"><img src="/image/social/facebook.png"></a></div>
 				<% } %>
-				<% if (!!locals.mail) { %>
-					<div class="item"><a href="mailto:<%= mail %>"><img src="/image/social/mail.png"></a></div>
+				<% if (config.github) { %>
+					<div class="item"><a href="<%= config.github %>" target="_blank"><img src="/image/social/github.png"></a></div>
+				<% } %>
+				<% if (config.mail) { %>
+					<div class="item"><a href="mailto:<%= config.mail %>"><img src="/image/social/mail.png"></a></div>
 				<% } %>
 				<div class="clearfix"></div>
 			</div>

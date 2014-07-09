@@ -1,6 +1,6 @@
 function Func() {
-
 }
+export default new Func();
 
 // 是否在数组中
 Func.prototype.inArray = function(data, arr) {
@@ -9,6 +9,30 @@ Func.prototype.inArray = function(data, arr) {
       return true;
   }
   return false;
+}
+
+// 执行一个生成器函数
+Func.prototype.run = function() {
+  // 获取参数
+  var fn = arguments[0];
+  var arg = [];
+  for (var i in arguments) {
+    if (i === '0') continue;
+    arg.push(arguments[i]);
+  }
+  arg.push(resume);
+
+  // 恢复函数
+  function resume() {
+    var arg = arguments;
+    process.nextTick(function() {
+      genObj.next(arg);
+    });
+  }
+
+  // 执行函数
+  var genObj = fn.apply(this, arg);
+  genObj.next();
 }
 
 // 获取当前时间
@@ -37,5 +61,3 @@ Func.prototype.getTime = function() {
 Func.prototype.getStamp = function() {
   return parseInt((new Date()).getTime() / 1000);
 }
-
-module.exports = new Func();

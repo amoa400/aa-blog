@@ -1,4 +1,4 @@
 node_modules
 .DS_Store
 *.psd
-config.json
+config.js

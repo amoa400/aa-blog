@@ -13,8 +13,8 @@
 			<div class="item">
 				<div class="title"><a href="/p/<%= posts[i].alias %>"><%= posts[i].title %></a></div>
 				<div class="other">
-					<span>by <%= username %></span>
-					<span>Publish Time: <%= posts[i].create_time_f %></span>
+					<span>by <%= config.username %></span>
+					<span>Publish Time: <%= posts[i].create_time %></span>
 					<span>Views: <%= posts[i].view_count %></span>
 				</div>
 				<div class="content"><%- posts[i].abstract %></div>

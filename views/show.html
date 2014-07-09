@@ -6,8 +6,8 @@
 		<div class="main post">
 			<div class="title"><%= post.title %></div>
 			<div class="other">
-				<span>by <%= username %></span>
-				<span>Publish Time: <%= post.create_time_f %></span>
+				<span>by <%= config.username %></span>
+				<span>Publish Time: <%= post.create_time %></span>
 				<span>Views: <%= post.view_count + 1 %></span>
 				<span class="jiathis_style">
 					<a class="jiathis_button_tsina"></a>
@@ -20,7 +20,7 @@
 					<a href="http://www.jiathis.com/share?uid=1911576" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank">More</a>
 				</span>
 				<% if (session.signed) { %>
-				<span>Admin: <a href="/admin/edit/<%= post.alias %>">edit</a></span>
+				<span>Admin: <a href="/edit/<%= post.alias %>">edit</a></span>
 				<% } %>
 			</div>
 			<div class="content markdown"><%- post.content %></div>

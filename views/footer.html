@@ -1,14 +1,14 @@
 		<footer class="main">
 			<div class="left">
-				© Copyright 2014 - <a href="/"><%= blogTitle %></a>
-				<% if (!!locals.beian) { %>
-					- <%= locals.beian %>
+				© Copyright 2014 - <a href="/"><%= config.name %></a>
+				<% if (config.beian) { %>
+					- <%= config.beian %>
 				<% } %>
 			</div>
 			<div class="right">
-				<span><a href="/admin/signin">Signin</a></span>
+				<span><a href="/signin">Signin</a></span>
 				<span>|</span>
-				<span><a href="https://github.com/amoa400/aa-blog" target="_blank">Powered by node.js & aa-blog</a></span>
+				<span><a href="http://developer.baidu.com/" target="_blank">Powered by bae & node.js</a></span>
 			</div>
 			<div class="clearfix"></div>
 		</footer>

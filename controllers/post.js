@@ -1,107 +1,111 @@
-var func = require('../function');
-var async = require('async');
-var aamysql = require('aa-mysql');
-var moment = require('moment');
-var markdown = require('markdown').markdown;
+import markdown from '../wine/markdown';
+import moment from '../wine/moment';
 
-exports.list = function(req, res) {
-  var param = {};
-  if (req.params.length == 1) {
-    param.page = req.params[0];
-  }
-  if (req.params.length == 2) {
-    param.keyword = req.params[0];
-    param.page = req.params[1];
+class Controller {
+};
+var controller = new Controller();
+export default controller;
+
+Controller.prototype.list = function(req, res) {
+  run(controller._list, req, res);
+}
+Controller.prototype._list = function*(req, res, resume) {
+  // 获取关键词
+  var where = [];
+  if (req.params.keyword) {
+    where = [
+      {title: ['%' + req.params.keyword + '%', 'LIKE', false]}, 
+      {content: ['%' + req.params.keyword + '%', 'LIKE', false]}, 
+      'OR'
+    ];
   }
 
+  // 获取页数
   var page = 1;
   var pageNum = 10;
-  if (!!param.page)
-    page = parseInt(param.page);
+  if (req.params.page)
+    page = parseInt(req.params.page);
+  
+  // 定义变量 
+  var err = '';
+  var count = '';
+  var post = '';
 
-  var whereStr = '';
-  if (!!param.keyword) {
-    var keyword = aamysql.escape(param.keyword);
-    keyword = '\'%' + keyword.substr(1, keyword.length - 2) + '%\'';
-    whereStr += '`title` LIKE ' + keyword + '';
-    whereStr += ' OR ';
-    whereStr += '`content` LIKE ' + keyword + '';
+  // 获取统计数据
+  [err, count] = yield pool.run({
+    table: 'post',
+    field: [['COUNT(*) AS `count`']],
+    where: where,
+    method: 'find'
+  }, resume);
+  if (err) {
+    res.redirect('/');
+    return;
   }
 
-  async.parallel([
-    function(cb) {
-      aamysql.table('aa_config').where({key: 'adminUser'}).find(function(err, row) {
-        cb(err, row);
-      });
-    },
-    function(cb) {
-      aamysql.table('aa_post').field(['COUNT(*) AS count']).where(whereStr).find(function(err, row) {
-        cb(err, row);
-      });
-    },
-    function (cb) {
-      aamysql.table('aa_post').field(['id', 'alias', 'title', 'abstract', 'create_time', 'view_count']).where(whereStr).limit((page - 1) * pageNum, pageNum).order(['id', 'desc']).select(function(err, row) {
-        cb(err, row);
-      });
-    }
-  ], function(err, data) {
-    if (err) {
-      console.log(err);
-      res.redirect('/');
-      return;
-    }
-    var posts = data[2];
-    for (var i = 0; i < posts.length; i++) {
-      posts[i] = exports.format(posts[i]);
-    }
-    res.render('list', {
-      pageTitle: 'index-aa-blog',
-      posts: posts,
-      username: data[0].value,
-      cntPage: page,
-      totPage: parseInt((data[1].count - 1) / pageNum) + 1,
-      count: data[1].count,
-      keyword: param.keyword
-    });
+  // 获取数据
+  [err, post] = yield pool.run({
+    table: 'post',
+    where: where,
+    order: [['id', 'DESC']],
+    page: [page, pageNum],
+    method: 'select'
+  }, resume);
+  if (err) {
+    res.redirect('/');
+    return;
+  }
+
+  for (var i = 0; i < post.length; i++) {
+    post[i] = controller.format(post[i]);
+  }
+
+  res.render('list', {
+    pageTitle: 'index-aa-blog',
+    posts: post,
+    cntPage: page,
+    totPage: parseInt((count.count - 1) / pageNum) + 1,
+    count: count.count,
+    keyword: req.params.keyword
   });
 }
 
-exports.show = function(req, res) {
-  async.parallel([
-    function(cb) {
-      aamysql.table('aa_config').where({key: 'adminUser'}).find(function(err, row) {
-        cb(err, row);
-      });
-    },
-    function(cb) {
-      aamysql.table('aa_post').where({alias: req.params.alias}).find(function(err, row) {
-        cb(err, row);
-      });
-    }
-  ], function(err, data) {
-    if (err || !data[1]) {
-      console.log(err);
-      res.redirect('/');
-      return;
-    }
+Controller.prototype.show = function(req, res) {
+  run(controller._show, req, res);
+}
+Controller.prototype._show = function*(req, res, resume) {
+  var err = '';
+  var post = '';
 
-    var post = exports.format(data[1]);
-    res.render('show', {
-      pageTitle: post.title, 
-      post: post, 
-      username: data[0].value
-    });
+  [err, post] = yield pool.run({
+    table: 'post',
+    where: [{alias: req.params.alias}],
+    method: 'find'
+  }, resume);
+  if (err) {
+    res.redirect('/');
+    return;
+  }
 
-    aamysql.table('aa_post').where({id: post.id}).update('view_count = view_count + 1');
+  var conn = {};
+  [err, conn] = yield pool.get(resume);
+  [err, err] = yield conn.query('UPDATE `aa_post` SET `view_count` = `view_count` + 1 WHERE `id` = ' + post.id, resume);
+  pool.release(conn);
+
+  post = controller.format(post);
+
+  res.render('show', {
+    pageTitle: post.title, 
+    post: post
   });
 }
 
-exports.format = function(doc) {
-  if (!!doc.abstract)
-    doc.abstract = markdown.toHTML(doc.abstract);
-  if (!!doc.content)
-    doc.content = markdown.toHTML(doc.content.replace('<!--more-->', ''));
-  doc.create_time_f = moment(doc.create_time).format('YYYY-MM-DD');
-  return doc;
+Controller.prototype.format = function(post) {
+  if (post.abstract)
+    post.abstract = markdown.toHTML(post.abstract);
+  if (post.content)
+    post.content = markdown.toHTML(post.content.replace('<!--more-->', ''));
+  post.create_time = moment(post.create_time).format('YYYY-MM-DD HH:mm');
+  return post;
 }
 

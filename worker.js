@@ -1,92 +1,86 @@
-var config = require('./config');
-var func = require('./function');
-var express = require('express');
-var ejs = require('ejs');
-var aamysql = require('aa-mysql');
+import express from './wine/express';
+import ejs from './wine/ejs';
+import mid from './wine/middleware';
+import colors from './wine/colors'
+import util from './wine/util';
+import db from './wine/aa-mysql';
+import loader from './wine/loader';
+import assets from './wine/assets';
+
+import config from './config';
+import func from './function';
+import router from './router';
+
+// 启动express
 var app = express();
+var eRouter = express.Router();
 
 // 环境变量
-app.set('port', process.env.PORT || config.port);
+app.set('port', config.port);
 app.set('views', __dirname + '/views');
 app.set('view engine', 'html');
-app.engine('html', require('ejs').renderFile);
+app.engine('html', ejs.renderFile);
 
-// production
-//app.set('env', 'production');
-//process.env.NODE_ENV = 'production';
+app.set('env', 'production');
+process.env.NODE_ENV = 'production';
 
 // 中间件
-app.use(express.logger('dev'));
-app.use(express.compress());
-app.use(express.timeout(10000));
-app.use(express.static(__dirname + '/public'));
-app.use(express.favicon(__dirname + '/public/favicon.ico'));
-app.use(express.cookieParser());
-app.use(express.session({
-  cookie: {maxAge: 20 * 60 * 1000},
-  secret: config.sessionSecret
+app.use(mid.compression());
+app.use(mid.serveStatic(__dirname + '/public'));
+app.use(mid.timeout(10000));
+app.use(mid.morgan('dev'));
+app.use(mid.bodyParser());
+app.use(mid.multipart({
+  uploadDir: __dirname + '/public/upload',
+  maxFilesSize: 15 * 1024 * 1024
 }));
-app.use(express.bodyParser());
-app.use(express.methodOverride());
+app.use(mid.cookieParser(config.secret));
+app.use(mid.session({secret: config.secret}));
+app.use(mid.methodOverride());
 app.use(function(req, res, next) {
   res.locals.session = req.session;
   next();
 });
-app.use(app.router);
+app.use(router(eRouter));
 
-if (app.get('env') == 'development') {
-  app.use(express.errorHandler());
-}
-else {
-  app.use(function(err, req, res, next) {
-    if (err) {
-      console.log(err.stack);
-      res.end('error ' + err.status);
-      next(err);
-    }
-    else
-      next();
-  });
-}
-
-// 模板变量
-app.locals({
-  Loader: require('loader'),
-  assetsMap: require('./public/assets.json')
+// 错误监听
+app.use(function(err, req, res, next){
+  if (typeof err == 'object' && err.status)
+    res.send(err.status, err.toString());
+  else
+    res.send(err);
 });
 
-// 数据库连接
-aamysql.config({
+// 模板变量
+app.locals.config = config;
+app.locals.Loader = loader;
+app.locals.assetsMap = assets;
+
+// 全局变量
+global.log = util.log;
+global.config = config;
+global.func = func;
+global.run = func.run;
+
+global.pool = db.create();
+pool.config({
   host: config.db.host,
   port: config.db.port,
   user: config.db.user,
-  pass: config.db.pass
-});
-aamysql.connect(function(err) {
-  if (err) {
-    console.log(err);
-    process.exit(0);
-  }
-  aamysql.use(config.db.name);
-
-  // 获取配置信息
-  aamysql.table('aa_config').select(function(err, rows) {
-    if (err) {
-      console.log(err);
-      return;
-    }
-    for (var i = 0; i < rows.length; i++) {
-      if (func.inArray(rows[i].key, ['blogTitle', 'blogSlogan', 'renren', 'weibo', 'twitter', 'facebook', 'mail', 'beian'])) {
-        app.locals[rows[i].key] = rows[i].value;
-      }
-    }
-  });
+  pass: config.db.pass,
+  db: config.db.name,
+  prefix: config.db.prefix
 });
 
-// 创建HTTP服务器
+// 监听
 app.listen(app.get('port'), function() {
-  console.log('worker listening on port ' + app.get('port'));
+  log(('server listen on port ' + app.get('port')).green);
 });
 
-// 路由器
-require('./route')(app);
+// 全局错误
+process.on('uncaughtException', function (err) {
+  console.log('error in process:');
+  console.log(err);
+});
+
+
