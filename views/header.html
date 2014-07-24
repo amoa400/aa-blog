@@ -2,14 +2,19 @@
 <html>
 
 	<head>
-		<% if (pageTitle == 'index-aa-blog') { %>
-			<title><%= config.name %> | <%= config.slogan %></title>
-		<% } else { %>
-			<title><%= pageTitle %> | <%= config.name %></title>
-		<% } %>
 		<meta charset="utf-8">
 		<meta name="viewport" content="initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 		<meta name="HandheldFriendly" content="true">
+		<meta http-equiv="Content-Language" content="zh-CN" />
+		<% if (pageTitle == 'index-aa-blog') { %>
+			<title><%= config.name %> | <%= config.slogan %></title>
+			<meta name="keywords" content="博客,js,nodejs,程序,创业,产品">
+			<meta name="description" content="<%= config.name %>,<%= config.slogan %>">
+		<% } else { %>
+			<title><%= pageTitle %> | <%= config.name %></title>
+			<meta name="keywords" content="<%= pageTitle %>,博客,js,nodejs,程序,创业,产品">
+			<meta name="description" content="<%= post.abstract.replace(/\n/g, '') %>">
+		<% } %>
 
 		<%- Loader('/assets/aa-blog.js', '/assets/aa-blog.css')
 			.js('/js/jquery.min.js')
@@ -44,7 +49,7 @@
 					<div class="item"><a href="<%= config.facebook %>" target="_blank"><img src="/image/social/facebook.png"></a></div>
 				<% } %>
 				<% if (config.github) { %>
-					<div class="item"><a href="<%= config.github %>" target="_blank"><img src="/image/social/github.png"></a></div>
+					<div class="item"><a href="<%= config.github %>" target="_blank"><img src="/image/social/github2.png"></a></div>
 				<% } %>
 				<% if (config.mail) { %>
 					<div class="item"><a href="mailto:<%= config.mail %>"><img src="/image/social/mail.png"></a></div>
