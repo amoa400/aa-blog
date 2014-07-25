@@ -8,10 +8,14 @@
 		<meta http-equiv="Content-Language" content="zh-CN" />
 		<% if (pageTitle == 'index-aa-blog') { %>
 			<title><%= config.name %> | <%= config.slogan %></title>
+		<% } else { %>
+			<title><%= pageTitle %> | <%= config.name %></title>
+		<% } %>
+
+		<% if (pageTitle == 'index-aa-blog' || pageTitle == 'signin' || pageTitle == 'save') { %>
 			<meta name="keywords" content="博客,js,nodejs,程序,创业,产品">
 			<meta name="description" content="<%= config.name %>,<%= config.slogan %>">
 		<% } else { %>
-			<title><%= pageTitle %> | <%= config.name %></title>
 			<meta name="keywords" content="<%= pageTitle %>,博客,js,nodejs,程序,创业,产品">
 			<meta name="description" content="<%= post.abstract.replace(/\n/g, '') %>">
 		<% } %>
@@ -22,7 +26,6 @@
 			.css('/css/bootstrap.min.css')
 			.css('/css/bootstrap-theme.min.css')
 			.css('/css/global.css')
-			.css('/css/markdown.css')
 			.done(assetsMap)
 		%>
 

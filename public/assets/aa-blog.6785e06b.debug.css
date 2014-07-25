@@ -141,6 +141,10 @@ footer .right {
 	float: right;
 }
 
+footer .statis {
+	display: none;
+}
+
 footer .right span {
 	margin-left: 5px;
 	display: inline-block;
@@ -201,6 +205,10 @@ footer .right span:first-child {
 	margin-top: 0;
 	font-weight: bold;
 	font-size: 16px;
+}
+
+.save .left .editor {
+	border: 1px solid #cccccc;
 }
 
 .save .left .preview {
@@ -283,42 +291,51 @@ footer .right span:first-child {
 /*
  * show
  */
-.show .left {
+.show .post {
 	padding: 25px;
 }
 
-.show .left .item:first-child {
+.show .post .item:first-child {
 	margin-top: 0px;
 }
 
-.show .left .title {
+.show .post .title {
 	border-bottom: 1px solid #cccccc;
 	padding-bottom: 7px;
 	font-weight: bold;
 	font-size: 22px;
 }
 
-.show .left .other {
+.show .post .other {
 	margin-top: 7px;
 }
 
-.show .left .other span {
+.show .post .other span {
 	display: inline-block;
 	margin-left: 10px;
 	color: #999999;
 }
 
-.show .left .other span:first-child {
+.show .post .other span:first-child {
 	margin-left: 0px;
 }
 
-.show .left .content {
+.show .post .content {
 	margin-top: 25px;
+}
+
+.show .comment {
+	margin-top: 25px;
+	padding: 25px;
 }
 
 /*
  * list
  */
+
+.list {
+}
+
 .list .left .item {
 	margin-top: 25px;
 }

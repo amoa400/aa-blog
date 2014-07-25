@@ -1,4 +1,3 @@
-import markdown from '../wine/markdown';
 import moment from '../wine/moment';
 
 class Controller {
@@ -102,9 +101,9 @@ Controller.prototype._show = function*(req, res, resume) {
 
 Controller.prototype.format = function(post) {
   if (post.abstract)
-    post.abstract = markdown.toHTML(post.abstract);
+    post.abstract = post.abstract;
   if (post.content)
-    post.content = markdown.toHTML(post.content.replace('<!--more-->', ''));
+    post.content = post.content.replace('<!--more-->', '');
   post.create_time = moment(post.create_time).format('YYYY-MM-DD HH:mm');
   return post;
 }

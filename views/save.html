@@ -1,5 +1,12 @@
 <% include header.html %>
 
+<style type="text/css">
+		#editor {
+			display: block;
+		}
+
+</style>
+
 <div class="save">
 <form action="/create-do" method="post">
 	<input name="id" value="<%= post.id %>" class="hidden">
@@ -9,8 +16,8 @@
 		<div class="item">
 			<input name="title" type="text" class="form-control" placeholder="title" value="<%= post.title %>">
 		</div>
-		<div class="item">
-			<textarea name="content" type="text" class="form-control" placeholder="content"><%= post.content %></textarea>
+		<div class="item editor">
+			<textarea id="editor" class="editor" name="content"><%= post.content %></textarea>
 		</div>
 		<div class="item preview"></div>
 	</div>
@@ -42,13 +49,46 @@
 	});
 
 	$('.save textarea').keyup(function() {
-		if (this.value.length == 0)
-			$('.save .preview').html('preview area');
-		else
-			$('.save .preview').html(markdown.toHTML(this.value));
+
 	});
 </script>
 
-<script type="text/javascript" src="/js/markdown.min.js"></script>
+<%- Loader('/assets/editor.js', '/assets/editor.css')
+	.js('/js/codemirror/codemirror.js')
+	.js('/js/codemirror/xml.js')
+	.js('/js/codemirror/javascript.js')
+	.js('/js/codemirror/css.js')
+	.js('/js/codemirror/vbscript.js')
+	.js('/js/codemirror/htmlmixed.js')
+	.css('/css/codemirror.css')
+	.done(assetsMap)
+%>
+
+<script type="text/javascript">
+	var mixedMode = {
+		name: "htmlmixed",
+			scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
+				mode: null},
+				{matches: /(text|application)\/(x-)?vb(a|script)/i,
+				mode: "vbscript"}]
+		};
+		var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+			lineNumbers: true,
+			lineWrapping: true,
+			mode: mixedMode
+		});
+
+		var change = function() {
+			var val = editor.getValue();
+			if (val.length == 0)
+				$('.save .preview').html('preview area');
+			else
+				$('.save .preview').html(val);
+		}
+		editor.on("change", function() {
+			change();
+  	});
+  	change();
+</script>
 
 <% include footer.html %>

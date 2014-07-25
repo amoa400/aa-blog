@@ -127,6 +127,10 @@ footer .right {
 	float: right;
 }
 
+footer .statis {
+	display: none;
+}
+
 footer .right span {
 	margin-left: 5px;
 	display: inline-block;
@@ -187,6 +191,10 @@ footer .right span:first-child {
 	margin-top: 0;
 	font-weight: bold;
 	font-size: 16px;
+}
+
+.save .left .editor {
+	border: 1px solid #cccccc;
 }
 
 .save .left .preview {

@@ -23,27 +23,26 @@
 				<span>Admin: <a href="/edit/<%= post.alias %>">edit</a></span>
 				<% } %>
 			</div>
-			<div class="content markdown"><%- post.content %></div>
+			<div class="content"><%- post.content %></div>
 		</div>
 
 		<div class="main comment">
-
-		<!-- 多说评论框 start -->
+			<!-- 多说评论框 start -->
 			<div class="ds-thread" data-thread-key="<%= post.id %>" data-title="<%= post.title %>" data-url="/p/<%= post.alias %>"></div>
-		<!-- 多说评论框 end -->
-		<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
-		<script type="text/javascript">
-		var duoshuoQuery = {short_name:"amoa400"};
-			(function() {
-				var ds = document.createElement('script');
-				ds.type = 'text/javascript';ds.async = true;
-				ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
-				ds.charset = 'UTF-8';
-				(document.getElementsByTagName('head')[0] 
-				 || document.getElementsByTagName('body')[0]).appendChild(ds);
-			})();
+			<!-- 多说评论框 end -->
+			<!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+			<script type="text/javascript">
+			var duoshuoQuery = {short_name:"amoa400"};
+				(function() {
+					var ds = document.createElement('script');
+					ds.type = 'text/javascript';ds.async = true;
+					ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+					ds.charset = 'UTF-8';
+					(document.getElementsByTagName('head')[0] 
+					 || document.getElementsByTagName('body')[0]).appendChild(ds);
+				})();
 			</script>
-		<!-- 多说公共JS代码 end -->
+			<!-- 多说公共JS代码 end -->
 		</div>
 
 	</div>
