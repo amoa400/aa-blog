@@ -306,6 +306,36 @@ footer .right span:first-child {
 	margin-left: 0px;
 }
 
+.show .post h1 {
+	margin: 0;
+	font-size: 24px;
+}
+
+.show .post h2 {
+	margin: 0;
+	font-size: 22px;
+}
+
+.show .post h3 {
+	margin: 0;
+	font-size: 20px;
+}
+
+.show .post h4 {
+	margin: 0;
+	font-size: 18px;
+}
+
+.show .post h5 {
+	margin: 0;
+	font-size: 16px;
+}
+
+.show .post h6 {
+	margin: 0;
+	font-size: 14px;
+}
+
 .show .post .content {
 	margin-top: 25px;
 }
