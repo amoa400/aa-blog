@@ -310,6 +310,16 @@ footer .right span:first-child {
 	margin-top: 25px;
 }
 
+.show .post .content pre {
+	margin-top: 7px;
+	margin-bottom: 7px;
+}
+
+.show .post .content code {
+	margin-left: 3px;
+	margin-right: 3px;
+}
+
 .show .comment {
 	margin-top: 25px;
 	padding: 25px;

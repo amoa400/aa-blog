@@ -100,10 +100,13 @@ Controller.prototype._show = function*(req, res, resume) {
 }
 
 Controller.prototype.format = function(post) {
-  if (post.abstract)
-    post.abstract = post.abstract;
-  if (post.content)
+  if (post.abstract) {
+    post.abstract = post.abstract.replace(/  \r\n/g, '<br/>');
+  }
+  if (post.content) {
     post.content = post.content.replace('<!--more-->', '');
+    post.content = post.content.replace(/  \r\n/g, '<br/>');
+  }
   post.create_time = moment(post.create_time).format('YYYY-MM-DD HH:mm');
   return post;
 }
