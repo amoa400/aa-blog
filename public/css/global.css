@@ -306,38 +306,8 @@ footer .right span:first-child {
 	margin-left: 0px;
 }
 
-.show .post h1 {
-	margin: 0;
-	font-size: 24px;
-}
-
-.show .post h2 {
-	margin: 0;
-	font-size: 22px;
-}
-
-.show .post h3 {
-	margin: 0;
-	font-size: 20px;
-}
-
-.show .post h4 {
-	margin: 0;
-	font-size: 18px;
-}
-
-.show .post h5 {
-	margin: 0;
-	font-size: 16px;
-}
-
-.show .post h6 {
-	margin: 0;
-	font-size: 14px;
-}
-
 .show .post .content {
-	margin-top: 25px;
+	margin-top: 15px;
 }
 
 .show .post .content pre {
@@ -348,6 +318,42 @@ footer .right span:first-child {
 .show .post .content code {
 	margin-left: 3px;
 	margin-right: 3px;
+}
+
+.show .post .content h1 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 24px;
+}
+
+.show .post .content h2 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 22px;
+}
+
+.show .post .content h3 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 20px;
+}
+
+.show .post .content h4 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 18px;
+}
+
+.show .post .content h5 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 16px;
+}
+
+.show .post .content h6 {
+	margin: 0;
+	margin-top: 3px;
+	font-size: 14px;
 }
 
 .show .comment {
